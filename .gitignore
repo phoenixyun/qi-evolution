@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+*.egg
+
+# 环境变量（包含 API Key，切勿提交）
+.env
+
+# 虚拟环境
+venv/
+env/
+.venv/
+
+# 构建产物
+build/
+
+# 日志
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+
+# evolution 代际产物（自动生成）
+evolution/library/
+evolution/library/gen_*/
+
+# 打包产物
+*.exe
+*.app

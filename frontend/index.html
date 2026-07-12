@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D 围棋 · 气之进化</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+</head>
+<body>
+
+    <!-- 加载屏幕 -->
+    <div id="loading">
+        <h1>气 之 进 化</h1>
+        <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+    </div>
+
+    <!-- 3D 场景 — 双棋盘布局 -->
+    <div id="boards-container">
+        <div id="scene-board" class="board-panel">
+            <div class="board-label">对战棋盘</div>
+            <div id="board-game-container" class="scene-inner"></div>
+            <div id="llm-overlay">
+                <div class="llm-chat">
+                    <div class="llm-header">
+                        <span>🤖 AI 对弈推理</span>
+                        <button id="btn-close-llm" class="icon-btn">✕</button>
+                    </div>
+                    <div class="llm-messages" id="llm-messages">
+                        <div class="llm-msg system">等待 AI 对弈开始…</div>
+                    </div>
+                    <div class="llm-input-row">
+                        <input id="llm-input" type="text" placeholder="输入指令…" class="llm-input">
+                        <button id="btn-llm-send" class="llm-send-btn">发送</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="scene-liberty" class="board-panel">
+            <div class="board-label">气形棋盘</div>
+            <div id="board-liberty-container" class="scene-inner"></div>
+            <div id="commentary-overlay"></div>
+        </div>
+    </div>
+
+    <!-- 顶部栏 -->
+    <div id="top-bar">
+        <div id="mode-indicator">
+            <span id="mode-text">◆ AI自对弈 ◆</span>
+            <button id="btn-edit-names" class="icon-btn edit-btn" title="编辑棋手名字" style="display:none">✎</button>
+            <span id="name-editor" style="display:none">
+                <input id="input-black-name" class="name-input" size="6" placeholder="黑方">
+                <span class="vs-text"> ⚫ vs ⚪ </span>
+                <input id="input-white-name" class="name-input" size="6" placeholder="白方">
+                <button id="btn-confirm-names" class="icon-btn" title="确认">✓</button>
+                <button id="btn-cancel-names" class="icon-btn" title="取消">✕</button>
+            </span>
+        </div>
+        <div id="game-title">3D 围棋 · 气之进化</div>
+
+    </div>
+
+    <!-- 棋谱进度 -->
+    <div id="game-progress-bar">
+        <div id="game-players" class="game-players"></div>
+        <div id="game-name"></div>
+        <div id="game-progress"></div>
+    </div>
+
+    <!-- 棋谱研究底部弹出面板 -->
+    <div id="study-popup" class="collapsed">
+        <div id="study-popup-header">
+            <span class="popup-title">📜 棋谱研究</span>
+            <button id="btn-close-study" class="btn-glass btn-small">✕</button>
+        </div>
+        <div id="study-popup-body">
+            <!-- 左半边：走法列表 -->
+            <div id="study-left-col">
+                <div id="move-list-panel" class="study-panel">
+                    <div class="panel-label" style="text-align:center;">📜 走法</div>
+                    <div id="move-list-inner"></div>
+                </div>
+            </div>
+            <!-- 右半边：打谱研究控制 -->
+            <div id="study-right-col">
+                <div id="study-control-panel" class="study-panel">
+                    <div class="panel-label">🔍 打谱研究</div>
+                    <div id="study-controls">
+                        <select id="game-selector" style="width:100%; margin-bottom:4px; padding:4px; background:#1a1a2e; color:#c8d6e5; border:1px solid #333; border-radius:4px;">
+                            <option value="">-- 选择棋谱 --</option>
+                        </select>
+                        <div style="display:flex; gap:4px; align-items:center;">
+                            <input type="number" id="input-move-num" placeholder="手数" min="1" value="1" style="flex:1;">
+                            <button id="btn-goto" class="btn-glass">跳转</button>
+                            <button id="btn-auto-play" class="btn-glass btn-highlight" title="自动打谱">▶ 自动</button>
+                        </div>
+                        <input type="file" id="sgf-file-input" accept=".sgf" style="display:none;">
+                        <button id="btn-load-sgf" class="btn-glass" style="width:100%;">📂 加载本地 SGF</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- 快捷键提示 -->
+    <div id="help-text">
+        Space 暂停&nbsp;&nbsp;+/- 速度<br>
+        R 重置<br>
+        ← 回退 &nbsp;→ 下一步<br>
+        A 自动打谱&nbsp;&nbsp;⏹ 停止
+    </div>
+
+    <!-- 底部控制栏 -->
+    <div id="controls">
+        <button id="btn-mode-ai" class="mode-btn active">🤖 AI对弈</button>
+        <button id="btn-mode-study" class="mode-btn">📜 打谱研究</button>
+        <button id="btn-reset">重置</button>
+        <span class="sep"></span>
+        <span id="view-mode-group" class="btn-group" title="视图模式">
+            <button id="btn-view-dual-h" class="view-btn active" title="双盘并排（左右）">⊞ 并排</button>
+            <button id="btn-view-flat" class="view-btn" title="平铺俯视">⬇ 平铺</button>
+        </span>
+        <button id="btn-toggle-rotate" class="toggle-btn" title="开启/关闭自动旋转">⟳</button>
+        <span class="sep"></span>
+        <button id="btn-prev">◀ 上一步</button>
+        <button id="btn-next">下一步 ▶</button>
+        <span class="sep"></span>
+        <button id="btn-speed-down">减速</button>
+        <button id="btn-speed-up">加速</button>
+        <span class="sep"></span>
+        <button id="btn-pause">⏯ 暂停</button>
+        <button id="btn-stop">⏹ 停止</button>
+        <span class="sep"></span>
+        <button id="btn-ai-commentary" class="btn-ai-commentary">🤖 AI棋评</button>
+        <button id="btn-toggle-llm" title="显示 LLM 对话">💬</button>
+        <span id="status-indicator">启动中...</span>
+    </div>
+
+    <script type="module" src="js/scene.js"></script>
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
