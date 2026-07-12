@@ -38,8 +38,8 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/your-username/3d-go-qi-evolution.git
-cd 3d-go-qi-evolution
+git clone https://github.com/phoenixyun/qi-evolution.git
+cd qi-evolution
 
 # 安装依赖
 pip install -r requirements.txt httpx
